@@ -55,8 +55,8 @@ public class SnmpV3Util {
     /**
      *
      * @param privacyProtocol
-     * @return the authentication protocol MD5 or SHA or null, if it's empty, means no authentication
-     * @throws IllegalArgumentException if not MD5 or SHA
+     * @return the privacy protocol OID or null, if it's empty, means no privacy protocol
+     * @throws IllegalArgumentException if privacyProtocol not found matched protocol OID
      */
     public static OID getPrivacyProtocol(String privacyProtocol) {
         if (privacyProtocol.isEmpty()) {
