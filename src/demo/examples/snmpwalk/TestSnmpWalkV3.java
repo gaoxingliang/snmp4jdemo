@@ -1,12 +1,10 @@
-package demo.examples;
+package demo.examples.snmpwalk;
 
-import demo.Constants;
 import demo.DebuggerLogFactory;
+import demo.examples.SnmpV3Util;
 import org.snmp4j.PDU;
-import org.snmp4j.ScopedPDU;
 import org.snmp4j.Snmp;
 import org.snmp4j.UserTarget;
-import org.snmp4j.event.ResponseEvent;
 import org.snmp4j.log.LogFactory;
 import org.snmp4j.mp.MPv3;
 import org.snmp4j.mp.SnmpConstants;
@@ -21,12 +19,17 @@ import org.snmp4j.smi.OctetString;
 import org.snmp4j.smi.UdpAddress;
 import org.snmp4j.smi.VariableBinding;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
+import org.snmp4j.util.DefaultPDUFactory;
+import org.snmp4j.util.TreeEvent;
+import org.snmp4j.util.TreeUtils;
+
+import java.util.List;
 
 /**
- * test a snmp get request by using snmp v2c (community version)
+ * test a snmp walk request by using snmp v3
  * Created by edward.gao on 07/09/2017.
  */
-public class TestSnmpGetV3 {
+public class TestSnmpWalkV3 {
 
     /**
      * Send a snmp get v3 request to request the remote device host name and uptime
@@ -102,30 +105,29 @@ public class TestSnmpGetV3 {
         target.setSecurityLevel(securityLevel);
         target.setSecurityName(new OctetString(security));
 
-        ScopedPDU pdu = new ScopedPDU();
-        pdu.setType(PDU.GET);
-        //we can send more than one oid in a signle pdu request
-        pdu.addOID(new VariableBinding(Constants.OID_HOSTNAME));
-        pdu.addOID(new VariableBinding(Constants.OID_UPTIME));
 
-        ResponseEvent responseEvent = snmp.get(pdu, target);
-        PDU responsePDU = responseEvent.getResponse();
-        if (responsePDU == null) {
-            System.out.println("No response found, maybe snmp v3 related args found wrong");
+        OID networkInterfaceRootOID = new OID("1.3.6.1.2.1.2.2.1.2");
+
+        // difference part here
+        // for a v3 version, set it's contextName and contextID to avoid NPE
+        TreeUtils treeUtils = new TreeUtils(snmp, new DefaultPDUFactory(PDU.GET, new OctetString(""),  new OctetString("")));
+        List<TreeEvent> resultEvents = treeUtils.getSubtree(target, networkInterfaceRootOID);
+        if (resultEvents == null || resultEvents.isEmpty()) {
+            System.out.println("No result found, please check the community");
         }
         else {
-            if (responsePDU.getErrorIndex() != 0 ) {
-                System.out.println("Error found " + responsePDU);
-            }
-            else {
-                System.out.println("Host name is - " + responsePDU.get(0).getVariable());
-                System.out.println("Uptime is - " + responsePDU.get(1).getVariable());
+            for (TreeEvent treeEvent : resultEvents) {
+                VariableBinding[] vbs = treeEvent.getVariableBindings();
+                for (VariableBinding vb : vbs) {
+                    System.out.println(String.format("Receive oid=%s value=%s", vb.getOid(), vb.getVariable()));
+                }
             }
         }
+
     }
 
     private static void _printUsage() {
-        System.out.println("Arguments error. TestSnmpGetV3 [remote device Ip, remote device port, security, authProtocol, authToken, privProtocol, privToken]");
+        System.out.println("Arguments error. " + TestSnmpWalkV3.class.getName() + " [remote device Ip, remote device port, security, authProtocol, authToken, privProtocol, privToken]");
         System.out.println("security is the user name");
         System.out.println("authProtocol is the authentication protocol, now support MD5 and SHA");
         System.out.println("authToken is the authentication passphrase");
