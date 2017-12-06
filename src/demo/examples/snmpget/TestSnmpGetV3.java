@@ -11,11 +11,7 @@ import org.snmp4j.event.ResponseEvent;
 import org.snmp4j.log.LogFactory;
 import org.snmp4j.mp.MPv3;
 import org.snmp4j.mp.SnmpConstants;
-import org.snmp4j.security.SecurityLevel;
-import org.snmp4j.security.SecurityModels;
-import org.snmp4j.security.SecurityProtocols;
-import org.snmp4j.security.USM;
-import org.snmp4j.security.UsmUser;
+import org.snmp4j.security.*;
 import org.snmp4j.smi.Address;
 import org.snmp4j.smi.OID;
 import org.snmp4j.smi.OctetString;
@@ -89,6 +85,15 @@ public class TestSnmpGetV3 {
         MPv3 mPv3 = new MPv3(usm);
         UsmUser user = new UsmUser(new OctetString(security), authProtocolOID, new OctetString(authToken), privacyProtocolOID, new OctetString(privToken));
         usm.addUser(user);
+
+        /**
+         * important add some other protocols
+         * here add an example for 3des
+         *
+         * @see SecurityProtocols#addDefaultProtocols()
+         */
+        SecurityProtocols.getInstance().addPrivacyProtocol(new Priv3DES());
+
         SecurityModels.getInstance().addSecurityModel(usm);
         snmp.getMessageDispatcher().addMessageProcessingModel(mPv3);
 

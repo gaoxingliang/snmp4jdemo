@@ -122,11 +122,6 @@ test {
     reports.html.destination = file("$buildDir/test-reports")
 }
 
-task upload {
-    dependsOn = ['clean','uploadArchives']
-    uploadArchives.mustRunAfter clean
-}
-
 
 task createJavaProject << {
     sourceSets*.java.srcDirs*.each { it.mkdirs() }

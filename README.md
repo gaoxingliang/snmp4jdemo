@@ -9,4 +9,7 @@ on a linux system:
                              
                              
 
-# 
+# build it in a fatjar
+``
+gradle fatjar
+``
