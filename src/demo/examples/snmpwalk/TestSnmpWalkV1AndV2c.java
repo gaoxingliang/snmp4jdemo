@@ -2,15 +2,12 @@ package demo.examples.snmpwalk;
 
 import demo.DebuggerLogFactory;
 import org.snmp4j.CommunityTarget;
+import org.snmp4j.SNMP4JSettings;
 import org.snmp4j.Snmp;
 import org.snmp4j.log.LogFactory;
 import org.snmp4j.mp.MPv1;
 import org.snmp4j.mp.SnmpConstants;
-import org.snmp4j.smi.Address;
-import org.snmp4j.smi.OID;
-import org.snmp4j.smi.OctetString;
-import org.snmp4j.smi.UdpAddress;
-import org.snmp4j.smi.VariableBinding;
+import org.snmp4j.smi.*;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
 import org.snmp4j.util.DefaultPDUFactory;
 import org.snmp4j.util.TreeEvent;
@@ -35,7 +32,7 @@ public class TestSnmpWalkV1AndV2c {
     /**
      * Send a snmp walk v1 request to walk out all interfaces
      *
-     * @param args [remote device Ip, remote device port, community]
+     * @param args [remote device Ip, remote device port, community, oid, getbulk]
      *             <p>
      *             Example: 192.168.170.149 161 public
      */
@@ -43,7 +40,7 @@ public class TestSnmpWalkV1AndV2c {
         System.setProperty(LogFactory.SNMP4J_LOG_FACTORY_SYSTEM_PROPERTY, DebuggerLogFactory.class.getCanonicalName());
 
 
-        if (args.length < 3) {
+        if (args.length < 5) {
             _printUsage();
             return;
         }
@@ -51,7 +48,14 @@ public class TestSnmpWalkV1AndV2c {
         String ip = args[0];
         int port = Integer.valueOf(args[1]);
         String community = args[2];
-        System.out.println(String.format("Send message version 1 to %s:%d with community - %s", ip, port, community));
+        String oid = args[3];
+        boolean useBulk = args.length > 4 ? Boolean.valueOf(args[4]) : true;
+        System.out.println("Use bulk - " + useBulk);
+        if (!useBulk) {
+            SNMP4JSettings.setNoGetBulk(true);
+        }
+
+        System.out.println(String.format("Send message version 1 to %s:%d with community - %s, oid - %s, bulkwalk - %s", ip, port, community, oid, useBulk));
         Snmp snmp = new Snmp(new DefaultUdpTransportMapping());
         snmp.getMessageDispatcher().addMessageProcessingModel(new MPv1());
         snmp.listen();

@@ -3,6 +3,7 @@ package demo.examples.snmpwalk;
 import demo.DebuggerLogFactory;
 import demo.examples.SnmpV3Util;
 import org.snmp4j.PDU;
+import org.snmp4j.SNMP4JSettings;
 import org.snmp4j.Snmp;
 import org.snmp4j.UserTarget;
 import org.snmp4j.log.LogFactory;
@@ -25,15 +26,15 @@ public class TestSnmpWalkV3 {
 
     /**
      * Send a snmp get v3 request to request the remote device host name and uptime
-     * @param args  [remote device Ip, remote device port, security, authProtocol, authToken, privProtocol, privToken]
+     * @param args  [remote device Ip, remote device port, security, authProtocol, authToken, privProtocol, privToken, oid, getbulk(true|false)]
      *
-     *              Example: 192.168.170.149 161 testUser md5 testAuth des privPass
+     *              Example: 192.168.170.149 161 testUser md5 testAuth des privPass 1.3.6.1.2.1.2.2.1.2 true
      */
     public static void main(String[] args) throws Exception {
 
         System.setProperty(LogFactory.SNMP4J_LOG_FACTORY_SYSTEM_PROPERTY, DebuggerLogFactory.class.getCanonicalName());
 
-        if (args.length < 7) {
+        if (args.length < 8) {
             _printUsage();
             return;
         }
@@ -45,13 +46,15 @@ public class TestSnmpWalkV3 {
         String authToken = args[4];
         String privProtocol = args[5];
         String privToken = args[6];
+        String oid = args[7];
+        boolean useBulk = args.length > 8 ? Boolean.valueOf(args[8]) : true;
         if (security.isEmpty()) {
             System.out.println("Security is empty, this is required");
             return;
         }
 
-        System.out.println(String.format("Send message version 3 to %s:%d with security=%s,authProtol=%s,authToken=%s,privProtocol=%s,privToken=%s",
-                ip, port, security, authProtocol, authToken, privProtocol, privToken));
+        System.out.println(String.format("Send message version 3 to %s:%d with security=%s,authProtol=%s,authToken=%s,privProtocol=%s,privToken=%s,oid=%s",
+                ip, port, security, authProtocol, authToken, privProtocol, privToken, oid));
 
         Snmp snmp = new Snmp(new DefaultUdpTransportMapping());
         OID authProtocolOID = SnmpV3Util.getAuthProtocol(authProtocol);
@@ -73,6 +76,10 @@ public class TestSnmpWalkV3 {
             }
         }
 
+        System.out.println("Use bulk - " + useBulk);
+        if (!useBulk) {
+            SNMP4JSettings.setNoGetBulk(true);
+        }
 
         OctetString localEngineID = new OctetString(
                 MPv3.createLocalEngineID());
@@ -108,12 +115,12 @@ public class TestSnmpWalkV3 {
         target.setSecurityName(new OctetString(security));
 
 
-        OID networkInterfaceRootOID = new OID("1.3.6.1.2.1.2.2.1.2");
+        OID rootOID = new OID(oid);
 
         // difference part here
         // for a v3 version, set it's contextName and contextID to avoid NPE
         TreeUtils treeUtils = new TreeUtils(snmp, new DefaultPDUFactory(PDU.GET, new OctetString(""),  new OctetString("")));
-        List<TreeEvent> resultEvents = treeUtils.getSubtree(target, networkInterfaceRootOID);
+        List<TreeEvent> resultEvents = treeUtils.getSubtree(target, rootOID);
         if (resultEvents == null || resultEvents.isEmpty()) {
             System.out.println("No result found, please check the community");
         }
@@ -129,11 +136,12 @@ public class TestSnmpWalkV3 {
     }
 
     private static void _printUsage() {
-        System.out.println("Arguments error. " + TestSnmpWalkV3.class.getName() + " [remote device Ip, remote device port, security, authProtocol, authToken, privProtocol, privToken]");
+        System.out.println("Arguments error. " + TestSnmpWalkV3.class.getName() + " [remote device Ip, remote device port, security, authProtocol, authToken, privProtocol, privToken, oid, getbulk]");
         System.out.println("security is the user name");
         System.out.println("authProtocol is the authentication protocol, now support MD5 and SHA");
         System.out.println("authToken is the authentication passphrase");
         System.out.println("privProtocol is the privacy protocol, now support DES/AES/AES128/3DES/AES256/AES384 (some may be restricted by jdk)");
         System.out.println("privToken is the privacy passpharse");
+        System.out.println("Example: 192.168.170.149 161 testUser md5 testAuth des privPass 1.3.6.1.2.1.2.2.1.2 true");
     }
 }

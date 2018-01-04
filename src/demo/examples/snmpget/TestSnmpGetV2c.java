@@ -9,11 +9,11 @@ import org.snmp4j.event.ResponseEvent;
 import org.snmp4j.log.LogFactory;
 import org.snmp4j.mp.MPv2c;
 import org.snmp4j.mp.SnmpConstants;
-import org.snmp4j.smi.Address;
-import org.snmp4j.smi.OctetString;
-import org.snmp4j.smi.UdpAddress;
-import org.snmp4j.smi.VariableBinding;
+import org.snmp4j.smi.*;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * test a snmp get request by using snmp v2c (community version)
@@ -24,7 +24,7 @@ public class TestSnmpGetV2c {
     /**
      * Send a snmp get v2 request to request the remote device host name and uptime
      *
-     * @param args [remote device Ip, remote device port, community]
+     * @param args [remote device Ip, remote device port, community, oid1, oid2...]
      *             <p>
      *             Example: 192.168.170.149 161 public
      */
@@ -50,13 +50,26 @@ public class TestSnmpGetV2c {
         target.setCommunity(new OctetString(community)); // community is important
         target.setRetries(1); // if possible, retry this request
         target.setTimeout(5000); // the timeout in mills for one pdu
-        target.setVersion(SnmpConstants.version2c);
+        target.setVersion(SnmpConstants.version1);
 
         PDU pdu = new PDU();
         pdu.setType(PDU.GET);
         //we can send more than one oid in a signle pdu request
-        pdu.addOID(new VariableBinding(Constants.OID_HOSTNAME));
-        pdu.addOID(new VariableBinding(Constants.OID_UPTIME));
+        List<OID> oidList = new ArrayList<>();
+        if (args.length > 3) {
+            for (int i = 3; i < args.length; i++) {
+                OID oid = new OID(args[i]);
+                oidList.add(oid);
+            }
+        }
+        else {
+            oidList.add(Constants.OID_HOSTNAME);
+            oidList.add(Constants.OID_UPTIME);
+        }
+        for (OID oid : oidList) {
+            pdu.add(new VariableBinding(oid));
+        }
+
 
         ResponseEvent responseEvent = snmp.get(pdu, target);
         PDU responsePDU = responseEvent.getResponse();
@@ -68,13 +81,14 @@ public class TestSnmpGetV2c {
                 System.out.println("Error found " + responsePDU);
             }
             else {
-                System.out.println("Host name is - " + responsePDU.get(0).getVariable());
-                System.out.println("Uptime is - " + responsePDU.get(1).getVariable());
+                for (VariableBinding vb : responsePDU.getVariableBindings()) {
+                    System.out.println(vb.getOid() + "=" + vb.getVariable());
+                }
             }
         }
     }
 
     private static void _printUsage() {
-        System.out.println("Arguments error. " + TestSnmpGetV2c.class.getName() + "[ip] [port] [community]");
+        System.out.println("Arguments error. " + TestSnmpGetV2c.class.getName() + "[ip] [port] [community] [oid1] [oid2] ...");
     }
 }
