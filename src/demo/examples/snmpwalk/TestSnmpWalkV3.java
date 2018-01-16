@@ -2,10 +2,7 @@ package demo.examples.snmpwalk;
 
 import demo.DebuggerLogFactory;
 import demo.examples.SnmpV3Util;
-import org.snmp4j.PDU;
-import org.snmp4j.SNMP4JSettings;
-import org.snmp4j.Snmp;
-import org.snmp4j.UserTarget;
+import org.snmp4j.*;
 import org.snmp4j.log.LogFactory;
 import org.snmp4j.mp.MPv3;
 import org.snmp4j.mp.SnmpConstants;
@@ -55,8 +52,8 @@ public class TestSnmpWalkV3 {
 
         System.out.println(String.format("Send message version 3 to %s:%d with security=%s,authProtol=%s,authToken=%s,privProtocol=%s,privToken=%s,oid=%s",
                 ip, port, security, authProtocol, authToken, privProtocol, privToken, oid));
-
-        Snmp snmp = new Snmp(new DefaultUdpTransportMapping());
+        MessageDispatcherImpl messageDispatcher = new MessageDispatcherImpl();
+        Snmp snmp = new Snmp(messageDispatcher, new DefaultUdpTransportMapping());
         OID authProtocolOID = SnmpV3Util.getAuthProtocol(authProtocol);
         OID privacyProtocolOID = SnmpV3Util.getPrivacyProtocol(privProtocol);
 
@@ -83,7 +80,8 @@ public class TestSnmpWalkV3 {
 
         OctetString localEngineID = new OctetString(
                 MPv3.createLocalEngineID());
-
+        SecurityProtocols.getInstance().addDefaultProtocols();
+        // you can add some other undefault protocols
         USM usm = new USM(SecurityProtocols.getInstance(), localEngineID, 0);
         //Enable the usm to discover the engineId automatically
         usm.setEngineDiscoveryEnabled(true);
@@ -98,8 +96,6 @@ public class TestSnmpWalkV3 {
          * @see SecurityProtocols#addDefaultProtocols()
          */
         SecurityProtocols.getInstance().addPrivacyProtocol(new Priv3DES());
-
-
         SecurityModels.getInstance().addSecurityModel(usm);
         snmp.getMessageDispatcher().addMessageProcessingModel(mPv3);
 

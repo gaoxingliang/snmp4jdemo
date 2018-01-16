@@ -3,6 +3,7 @@ package demo.examples.snmpget;
 import demo.Constants;
 import demo.DebuggerLogFactory;
 import org.snmp4j.CommunityTarget;
+import org.snmp4j.MessageDispatcherImpl;
 import org.snmp4j.PDU;
 import org.snmp4j.Snmp;
 import org.snmp4j.event.ResponseEvent;
@@ -41,7 +42,8 @@ public class TestSnmpGetV1 {
         int port = Integer.valueOf(args[1]);
         String community = args[2];
         System.out.println(String.format("Send message version 1 to %s:%d with community - %s", ip, port, community));
-        Snmp snmp = new Snmp(new DefaultUdpTransportMapping());
+        MessageDispatcherImpl messageDispatcher = new MessageDispatcherImpl();
+        Snmp snmp = new Snmp(messageDispatcher, new DefaultUdpTransportMapping());
         snmp.getMessageDispatcher().addMessageProcessingModel(new MPv1());
         snmp.listen();
 

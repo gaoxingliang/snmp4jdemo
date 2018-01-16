@@ -2,27 +2,14 @@ package demo.examples.snmpget;
 
 import demo.Constants;
 import demo.examples.SnmpV3Util;
-import org.snmp4j.CommunityTarget;
-import org.snmp4j.PDU;
-import org.snmp4j.PDUv1;
-import org.snmp4j.ScopedPDU;
-import org.snmp4j.Snmp;
-import org.snmp4j.UserTarget;
+import org.snmp4j.*;
 import org.snmp4j.event.ResponseEvent;
 import org.snmp4j.mp.MPv1;
 import org.snmp4j.mp.MPv2c;
 import org.snmp4j.mp.MPv3;
 import org.snmp4j.mp.SnmpConstants;
-import org.snmp4j.security.SecurityLevel;
-import org.snmp4j.security.SecurityModels;
-import org.snmp4j.security.SecurityProtocols;
-import org.snmp4j.security.USM;
-import org.snmp4j.security.UsmUser;
-import org.snmp4j.smi.Address;
-import org.snmp4j.smi.OID;
-import org.snmp4j.smi.OctetString;
-import org.snmp4j.smi.UdpAddress;
-import org.snmp4j.smi.VariableBinding;
+import org.snmp4j.security.*;
+import org.snmp4j.smi.*;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
 
 import java.io.IOException;
@@ -67,8 +54,8 @@ public class CompareDifferentVersion {
 
         System.out.println(String.format("Send message version 3 to %s:%d with security=%s,authProtol=%s,authToken=%s,privProtocol=%s,privToken=%s",
                 _ip, _port, _security, authProtocol, authToken, privProtocol, privToken));
-
-        _snmp = new Snmp(new DefaultUdpTransportMapping());
+        MessageDispatcherImpl messageDispatcher = new MessageDispatcherImpl();
+        _snmp = new Snmp(messageDispatcher, new DefaultUdpTransportMapping());
         OID authProtocolOID = SnmpV3Util.getAuthProtocol(authProtocol);
         OID privacyProtocolOID = SnmpV3Util.getPrivacyProtocol(privProtocol);
 

@@ -2,6 +2,7 @@ package demo.examples.snmpwalk;
 
 import demo.DebuggerLogFactory;
 import org.snmp4j.CommunityTarget;
+import org.snmp4j.MessageDispatcherImpl;
 import org.snmp4j.SNMP4JSettings;
 import org.snmp4j.Snmp;
 import org.snmp4j.log.LogFactory;
@@ -56,7 +57,8 @@ public class TestSnmpWalkV1AndV2c {
         }
 
         System.out.println(String.format("Send message version 1 to %s:%d with community - %s, oid - %s, bulkwalk - %s", ip, port, community, oid, useBulk));
-        Snmp snmp = new Snmp(new DefaultUdpTransportMapping());
+        MessageDispatcherImpl messageDispatcher = new MessageDispatcherImpl();
+        Snmp snmp = new Snmp(messageDispatcher, new DefaultUdpTransportMapping());
         snmp.getMessageDispatcher().addMessageProcessingModel(new MPv1());
         snmp.listen();
 

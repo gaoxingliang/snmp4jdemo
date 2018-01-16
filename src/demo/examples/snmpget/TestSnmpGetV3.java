@@ -3,20 +3,13 @@ package demo.examples.snmpget;
 import demo.Constants;
 import demo.DebuggerLogFactory;
 import demo.examples.SnmpV3Util;
-import org.snmp4j.PDU;
-import org.snmp4j.ScopedPDU;
-import org.snmp4j.Snmp;
-import org.snmp4j.UserTarget;
+import org.snmp4j.*;
 import org.snmp4j.event.ResponseEvent;
 import org.snmp4j.log.LogFactory;
 import org.snmp4j.mp.MPv3;
 import org.snmp4j.mp.SnmpConstants;
 import org.snmp4j.security.*;
-import org.snmp4j.smi.Address;
-import org.snmp4j.smi.OID;
-import org.snmp4j.smi.OctetString;
-import org.snmp4j.smi.UdpAddress;
-import org.snmp4j.smi.VariableBinding;
+import org.snmp4j.smi.*;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
 
 /**
@@ -54,8 +47,8 @@ public class TestSnmpGetV3 {
 
         System.out.println(String.format("Send message version 3 to %s:%d with security=%s,authProtol=%s,authToken=%s,privProtocol=%s,privToken=%s",
                 ip, port, security, authProtocol, authToken, privProtocol, privToken));
-
-        Snmp snmp = new Snmp(new DefaultUdpTransportMapping());
+        MessageDispatcherImpl messageDispatcher = new MessageDispatcherImpl();
+        Snmp snmp = new Snmp(messageDispatcher, new DefaultUdpTransportMapping());
         OID authProtocolOID = SnmpV3Util.getAuthProtocol(authProtocol);
         OID privacyProtocolOID = SnmpV3Util.getPrivacyProtocol(privProtocol);
 
@@ -78,6 +71,9 @@ public class TestSnmpGetV3 {
 
         OctetString localEngineID = new OctetString(
                 MPv3.createLocalEngineID());
+        SecurityProtocols.getInstance().addDefaultProtocols();
+        // you can add some other undefault protocols
+        // SecurityProtocols.getInstance().addPrivacyProtocol(new Priv3DES());
 
         USM usm = new USM(SecurityProtocols.getInstance(), localEngineID, 0);
         //Enable the usm to discover the engineId automatically
