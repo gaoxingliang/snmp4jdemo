@@ -57,7 +57,7 @@ public class TestSnmpGetV2c {
 
         PDU pdu = new PDU();
         pdu.setType(PDU.GET);
-        //we can send more than one oid in a signle pdu request
+        //we can send more than one oid in a single pdu request
         List<OID> oidList = new ArrayList<>();
         if (args.length > 3) {
             for (int i = 3; i < args.length; i++) {

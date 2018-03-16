@@ -1,5 +1,4 @@
 package demo.examples.snmpget;
-
 import demo.Constants;
 import demo.DebuggerLogFactory;
 import demo.examples.SnmpV3Util;
@@ -12,6 +11,9 @@ import org.snmp4j.security.*;
 import org.snmp4j.smi.*;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * test a snmp get request by using snmp v2c (community version)
  * Created by edward.gao on 07/09/2017.
@@ -20,7 +22,7 @@ public class TestSnmpGetV3 {
 
     /**
      * Send a snmp get v3 request to request the remote device host name and uptime
-     * @param args  [remote device Ip, remote device port, security, authProtocol, authToken, privProtocol, privToken]
+     * @param args  [remote device Ip, remote device port, security, authProtocol, authToken, privProtocol, privToken, [ oid1], [oid2] ]
      *
      *              Example: 192.168.170.149 161 testUser md5 testAuth des privPass
      */
@@ -106,28 +108,43 @@ public class TestSnmpGetV3 {
 
         ScopedPDU pdu = new ScopedPDU();
         pdu.setType(PDU.GET);
-        //we can send more than one oid in a signle pdu request
-        pdu.addOID(new VariableBinding(Constants.OID_HOSTNAME));
-        pdu.addOID(new VariableBinding(Constants.OID_UPTIME));
+
+        //we can send more than one oid in a single pdu request
+        List<OID> oidList = new ArrayList<OID>();
+        if (args.length > 7) {
+            for (int i = 7; i < args.length; i++) {
+                OID oid = new OID(args[i]);
+                oidList.add(oid);
+            }
+        }
+        else {
+            oidList.add(Constants.OID_HOSTNAME);
+            oidList.add(Constants.OID_UPTIME);
+        }
+        for (OID oid : oidList) {
+            pdu.add(new VariableBinding(oid));
+        }
+
 
         ResponseEvent responseEvent = snmp.get(pdu, target);
         PDU responsePDU = responseEvent.getResponse();
         if (responsePDU == null) {
-            System.out.println("No response found, maybe snmp v3 related args found wrong");
+            System.out.println("No response found, maybe community wrong");
         }
         else {
-            if (responsePDU.getErrorIndex() != 0 ) {
+            if (responsePDU.getErrorIndex() != 0) {
                 System.out.println("Error found " + responsePDU);
             }
             else {
-                System.out.println("Host name is - " + responsePDU.get(0).getVariable());
-                System.out.println("Uptime is - " + responsePDU.get(1).getVariable());
+                for (VariableBinding vb : responsePDU.getVariableBindings()) {
+                    System.out.println(vb.getOid() + "=" + vb.getVariable());
+                }
             }
         }
     }
 
     private static void _printUsage() {
-        System.out.println("Arguments error. " + TestSnmpGetV3.class.getName() + " [remote device Ip, remote device port, security, authProtocol, authToken, privProtocol, privToken]");
+        System.out.println("Arguments error. " + TestSnmpGetV3.class.getName() + " [remote device Ip, remote device port, security, authProtocol, authToken, privProtocol, privToken, [oid1], [oid2] ...]");
         System.out.println("security is the user name");
         System.out.println("authProtocol is the authentication protocol, now support MD5 and SHA");
         System.out.println("authToken is the authentication passphrase");
